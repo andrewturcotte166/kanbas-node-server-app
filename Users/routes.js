@@ -49,7 +49,11 @@ export default function UserRoutes(app) {
         res.sendStatus(200);
     };
     const profile = async (req, res) => {
-        res.json(currentUser);
+        if (currentUser) {
+            res.json(currentUser);
+        } else {
+            res.sendStatus(401);
+        }
     };
     app.post("/api/users", createUser);
     app.get("/api/users", findAllUsers);
