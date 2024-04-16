@@ -1,5 +1,4 @@
 import * as dao from "./dao.js";
-let currentUser = null;
 export default function UserRoutes(app) {
     const createUser = async (req, res) => {
         const user = await dao.createUser(req.body);
@@ -31,13 +30,15 @@ export default function UserRoutes(app) {
                 { message: "Please enter a username and password" });
             return
         }
-        currentUser = await dao.createUser(req.body);
+        const currentUser = await dao.createUser(req.body);
+        req.session["currentUser"] = currentUser;
         res.json(currentUser);
     };
     const signin = async (req, res) => {
         const { username, password } = req.body;
-        currentUser = await dao.findUserByCredentials(username, password);
+        const currentUser = await dao.findUserByCredentials(username, password);
         if (currentUser) {
+            req.session["currentUser"] = currentUser;
             res.json(currentUser);
         } else {
             res.status(401).json(
@@ -45,15 +46,17 @@ export default function UserRoutes(app) {
         }
     };
     const signout = (req, res) => {
-        currentUser = null;
+        req.session.destroy();
         res.sendStatus(200);
     };
     const profile = async (req, res) => {
-        if (currentUser) {
-            res.json(currentUser);
-        } else {
+        console.log(req.session)
+        const currentUser = req.session["currentUser"];
+        if (!currentUser) {
             res.sendStatus(401);
+            return;
         }
+        res.json(currentUser);
     };
     app.post("/api/users", createUser);
     app.get("/api/users", findAllUsers);
